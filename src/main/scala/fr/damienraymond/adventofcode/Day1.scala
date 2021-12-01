@@ -2,14 +2,20 @@ package fr.damienraymond.adventofcode
 
 object Day1 {
 
-  def rateOfDepthIncrease(input: List[Int]): Int = {
-      val streamInput = input.to(LazyList)
-      streamInput.zip(streamInput.drop(1)).map{
-        case (previous, current) if previous < current => 1
-        case _ => 0
-      }.sum
-  }
+  def rateOfDepthIncrease(input: List[Int]): Int =
+      rateOfDepthIncreaseLazy(input.to(LazyList))
 
+  def rateOfDepthIncreaseSlidingWindow3(input: List[Int]): Int =
+    rateOfDepthIncreaseLazy(sumSlidingWindowOf(3)(input).to(LazyList))
+
+  private def sumSlidingWindowOf(size: Int)(input: List[Int]): Iterator[Int] =
+    input.sliding(size).map(_.sum)
+
+  private def rateOfDepthIncreaseLazy(streamInput: LazyList[Int]) =
+    streamInput.zip(streamInput.drop(1)).map {
+      case (previous, current) if previous < current => 1
+      case _ => 0
+    }.sum
 }
 
 object Day1Input {
