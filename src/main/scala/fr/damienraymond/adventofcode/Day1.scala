@@ -22,6 +22,6 @@ object Day1 {
 
 object Day1Input {
 
-  val input = ReadFileUtil.readFileInts("day1.txt")
+  val input = ReadFileUtil.readFileLineInts("day1.txt")
 
 }

@@ -6,11 +6,11 @@ import scala.io.Source
 
 object ReadFileUtil {
 
-  def readFile(filename: String): Resource[IO, Iterator[String]] =
+  def readFileLine(filename: String): Resource[IO, LazyList[String]] =
     Resource.make(IO(Source.fromResource(filename)))(source => IO(source.close()))
-      .map(_.getLines())
+      .map(_.getLines().to(LazyList))
 
-  def readFileInts(filename: String): Resource[IO, LazyList[Int]] =
-    readFile(filename).map(_.to(LazyList).map(_.toInt))
+  def readFileLineInts(filename: String): Resource[IO, LazyList[Int]] =
+    readFileLine(filename).map(_.map(_.toInt))
 
 }
