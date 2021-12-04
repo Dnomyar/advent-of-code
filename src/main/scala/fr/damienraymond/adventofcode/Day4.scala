@@ -51,48 +51,22 @@ object Day4 {
     }
   }
 
-  def findWinningGrid2(grids: Vector[BingoGrid], numberCalled: List[Int]): Option[(BingoGrid, Int)] = {
-    @tailrec
-    def loop(grids: Vector[BingoGrid], numberCalled: List[Int]): Option[(BingoGrid, Int)] = {
-      numberCalled match {
-        case head :: tail =>
-          val updatedGrids = grids.map(_.calledNumber(head))
-          updatedGrids.find(_.hasWon) match {
-            case Some(grid) => Some((grid, head))
-            case None => loop(updatedGrids, tail)
-          }
-        case Nil => None
-      }
-
-//      grids.find(_.hasWon) match {
-//        case Some(grid) => Some(grid)
-//        case None =>
-//          numberCalled match {
-//            case head :: tail =>
-//              loop(grids.map(_.calledNumber(head)), tail)
-//            case Nil => None
+//  def findWinningGrid(grids: Vector[BingoGrid], numberCalled: List[Int]): Option[(BingoGrid, Int)] = {
+//    @tailrec
+//    def loop(grids: Vector[BingoGrid], numberCalled: List[Int]): Option[(BingoGrid, Int)] = {
+//      numberCalled match {
+//        case head :: tail =>
+//          val updatedGrids = grids.map(_.calledNumber(head))
+//          updatedGrids.find(_.hasWon) match {
+//            case Some(grid) => Some((grid, head))
+//            case None => loop(updatedGrids, tail)
 //          }
+//        case Nil => None
 //      }
-    }
-    loop(grids, numberCalled)
-  }
-
-
-  def programPart1(grids: Vector[BingoGrid], numbersCalled: List[Int]): Option[Int] = {
-    findWinningGrid2(grids, numbersCalled).map{
-      case (grid, winningNumber) => grid.sumOfUnmarkedNumbers * winningNumber
-    }
-  }
-
-  def programPart1(grid: BingoGrid, numberCalled: List[Int]): Option[Int] = programPart1(Vector(grid), numberCalled)
-
-
-  def parseAndProgramPart1(input: String): Option[Int] = {
-    parse(input).flatMap{
-      case (grids, numbersCalled) => programPart1(grids, numbersCalled)
-    }
-  }
-
+//    }
+//    loop(grids, numberCalled)
+//  }
+//
 
   def parse(input: String): Option[(Vector[BingoGrid], List[Int])] = {
     input.split("\n\n").toList match {
@@ -104,9 +78,66 @@ object Day4 {
     }
   }
 
+  def scorePart1(grids: Vector[BingoGrid], numbersCalled: List[Int]): Option[Int] = {
+
+    @tailrec
+    def findWinningGrid(grids: Vector[BingoGrid], numberCalled: List[Int]): Option[(BingoGrid, Int)] = {
+      numberCalled match {
+        case head :: tail =>
+          val updatedGrids = grids.map(_.calledNumber(head))
+          updatedGrids.find(_.hasWon) match {
+            case Some(grid) => Some((grid, head))
+            case None => findWinningGrid(updatedGrids, tail)
+          }
+        case Nil => None
+      }
+    }
+
+    findWinningGrid(grids, numbersCalled).map{
+      case (grid, winningNumber) => grid.sumOfUnmarkedNumbers * winningNumber
+    }
+  }
+
+  def parseAndProgramPart1(input: String): Option[Int] = {
+    parse(input).flatMap{
+      case (grids, numbersCalled) => scorePart1(grids, numbersCalled)
+    }
+  }
+
+
+  def parseAndProgramPart2(input: String): Option[Int] = {
+    parse(input).flatMap{
+      case (grids, numbersCalled) => scorePart2(grids, numbersCalled)
+    }
+  }
+
+  def scorePart2(grids: Vector[BingoGrid], numbersCalled: List[Int]): Option[Int] = {
+    @tailrec
+    def loop(grids: Vector[BingoGrid], numberCalled: List[Int]): Option[(BingoGrid, Int)] = {
+      numberCalled match {
+        case head :: tail =>
+          val updatedGrids = grids.map(_.calledNumber(head))
+          if(updatedGrids.filterNot(_.hasWon).size >= 1) loop(updatedGrids.filterNot(_.hasWon), tail)
+          else{
+            updatedGrids.find(_.hasWon) match {
+              case Some(grid) => Some((grid, head))
+              case None => loop(updatedGrids, tail)
+            }
+          }
+        case Nil => None
+      }
+    }
+    loop(grids, numbersCalled).map{
+      case (grid, winningNumber) =>
+        grid.sumOfUnmarkedNumbers * winningNumber
+    }
+  }
+
+
 
   val day4Input: Resource[IO, LazyList[String]] =
     ReadFileUtil.readFileLine("day4.txt")
+
 
 
 }
