@@ -14,8 +14,9 @@ object Day1 {
     input.sliding(size).map(_.sum).to(LazyList)
 
   private def rateOfDepthIncreaseLazy(streamInput: LazyList[Int]) =
-    streamInput.zip(streamInput.drop(1)).map {
-      case (previous, current) if previous < current => 1
+    //streamInput.zip(streamInput.drop(1)).map {
+    streamInput.sliding(2).map {
+      case LazyList(previous, current) if previous < current => 1
       case _ => 0
     }.sum
 }
