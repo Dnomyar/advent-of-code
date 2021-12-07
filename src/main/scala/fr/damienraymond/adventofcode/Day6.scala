@@ -5,29 +5,29 @@ import fr.damienraymond.ReadFileUtil
 
 object Day6 {
 
-  type NumberOfFish = Int
-  type Day = Int
+  type NumberOfFish = Long
+  type Day = Long
 
-  def part1(input: String)(numberOfDays: Int): NumberOfFish =
+  def part1(input: String)(numberOfDays: Long): NumberOfFish =
     (parse _ andThen countFishPerDay andThen numberOrFishAfter2(numberOfDays) andThen numberOfFishAtTheEnd)(input)
 
-  def parse(input: String): List[Int] = input.split(",").map(_.toInt).toList
+  def parse(input: String): List[Long] = input.split(",").map(_.toLong).toList
 
-  def countFishPerDay(fishCycle: List[Int]): Vector[NumberOfFish] = {
-    val numberOfFishPerDay = fishCycle.groupBy(identity).view.mapValues(_.size).toMap
-    Vector.range(0, 10).map(numberOfFishPerDay.getOrElse(_, 0))
+  def countFishPerDay(fishCycle: List[Long]): Vector[NumberOfFish] = {
+    val numberOfFishPerDay = fishCycle.groupBy(identity).view.mapValues(_.size.toLong).toMap
+    Vector.range[Long](0L, 10L).map(numberOfFishPerDay.getOrElse(_, 0L))
   }
 
-  def numberOrFishAfter2(numberOfDays: Int)(initialState: Vector[NumberOfFish]): Vector[NumberOfFish] = {
+  def numberOrFishAfter2(numberOfDays: Long)(initialState: Vector[NumberOfFish]): Vector[NumberOfFish] = {
     require(initialState.length == 10)
 
-    val addNewBirths: Vector[Int] => Vector[Int] = fishVector =>
+    val addNewBirths: Vector[Long] => Vector[Long] = fishVector =>
       fishVector.updated(9, fishVector(0))
 
-    val move0sTo7s: Vector[Int] => Vector[Int] = fishVector =>
+    val move0sTo7s: Vector[Long] => Vector[Long] = fishVector =>
       fishVector.updated(7, fishVector(0) + fishVector(7))
 
-    val shiftAllByOne: Vector[Int] => Vector[Int] =
+    val shiftAllByOne: Vector[Long] => Vector[Long] =
       (0 to 9).foldLeft(_){
         case (acc, day) if day == 9 =>
           acc.updated(9,0)
@@ -43,7 +43,7 @@ object Day6 {
     else numberOrFishAfter2(numberOfDays - 1)(newState)
   }
 
-  def numberOfFishAtTheEnd(state: Vector[NumberOfFish]): Int = {
+  def numberOfFishAtTheEnd(state: Vector[NumberOfFish]): Long = {
     state.sum
   }
 
