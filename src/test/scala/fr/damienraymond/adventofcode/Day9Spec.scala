@@ -7,7 +7,7 @@ import org.scalatest.matchers.should.Matchers
 
 class Day9Spec extends AnyFlatSpec with Matchers {
 
-  it should "work with the example" in {
+  it should "work with the example part 1" in {
     Day9.part1(
       """2199943210
         |3987894921
@@ -76,6 +76,26 @@ class Day9Spec extends AnyFlatSpec with Matchers {
       .use(lines => IO(Day9.part1(lines.mkString("\n"))))
       .unsafeRunSync()
     println(s"Part 1 result ${res}")
+  }
+  it should "return print the result for part2" in {
+    val res = Day9.input
+      .use(lines => IO(Day9.part2(lines.mkString("\n"))))
+      .unsafeRunSync()
+    println(s"Part 2 result ${res}")
+  }
+
+  it should "work with the example part 2" in {
+    Day9.part2(
+      """2199943210
+        |3987894921
+        |9856789892
+        |8767896789
+        |9899965678""".stripMargin
+    ) should be(1134)
+  }
+
+  it should "find basin 1" in {
+    Day9.findBasin(matrix)(0, 1) should be(Set((0, 1), (0, 0), (1, 0)))
   }
 
 }
