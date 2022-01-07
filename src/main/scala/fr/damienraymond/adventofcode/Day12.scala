@@ -62,29 +62,21 @@ object Day12 {
   def canGoThroughSmallCave(
       numberOfTimePerSmallCave: Int
   )(path: List[String], neighbours: String): Boolean = {
-    if (numberOfTimePerSmallCave == 1) {
-      path.count(_ == neighbours) < numberOfTimePerSmallCave
-    } else {
-      val reverse = (neighbours :: path).reverse
+    val set = (neighbours :: path)
+      .filterNot(isBigCave)
+      .groupBy(identity)
+      .view
+      .mapValues(_.length)
+      .values
+      .groupBy(identity)
+      .view
+      .mapValues(_.size)
+      .toMap
 
-      val set = (neighbours :: path)
-        .filterNot(isBigCave)
-        .groupBy(identity)
-        .mapValues(_.length)
-        .values
-        .groupBy(identity)
-        .mapValues(_.size)
-        .toMap
-
-//      println(s"reverse = ${reverse} - ${set} - ${set.keys
-//        .forall(_ <= 2)} = ${set.get(2).forall(_ <= 1)}")
-
+    if (numberOfTimePerSmallCave == 1)
+      set.keys.forall(_ <= 1)
+    else
       set.keys.forall(_ <= 2) && set.get(2).forall(_ <= 1)
-
-//      set == Set(1) || set == Set(1, 2)
-    }
-
-//    path.count(_ == neighbours) < numberOfTimePerSmallCave
   }
 
   private def isBigCave(neighbours: String) = neighbours.forall(_.isUpper)
