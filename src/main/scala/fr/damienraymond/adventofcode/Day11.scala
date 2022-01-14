@@ -1,7 +1,13 @@
 package fr.damienraymond.adventofcode
 
+import scala.collection.mutable
+
 object Day11 {
-  def part1(input: String): Int = ???
+  def part1(input: String): Int =
+    (parse _ andThen evolution1(100))(input)._2
+
+  def part2(input: String): Option[Int] =
+    (parse _ andThen evolution1(500))(input)._3
 
   def parse(input: String): Vector[Vector[Int]] =
     input.split("\n").map(_.split("").map(_.toInt).toVector).toVector
@@ -26,136 +32,65 @@ object Day11 {
     }
   }
 
-  def increaseMatrix(
-      matrix: Vector[Vector[Int]]
-  )(iteration: Int): (Int, Vector[Vector[Int]]) = {
+  def evolution1(numberOfEvolution: Int)(
+      graph: Vector[Vector[Int]]
+  ): (Vector[Vector[Int]], Int, Option[Int]) = {
+    val maybeToFlash = mutable.Queue.empty[(Int, Int)]
 
-    val mapMatrix = matrixToMap(matrix)
+    val mutableGraph: mutable.Seq[mutable.ArraySeq[Int]] =
+      mutable.ArraySeq.from(
+        graph.map(mutable.ArraySeq.from)
+      )
 
-    val newMatrix =
-      (0 until iteration).foldLeft((0, mapMatrix)) {
-        case ((numberOf, mapMatrix), _) =>
-          val (numberOf2, res) = increaseMatrixByOne(matrix)(mapMatrix)
-          (numberOf + numberOf2, res)
+    val coordinates = for {
+      i <- mutableGraph.indices
+      j <- mutableGraph(i).indices
+    } yield (i, j)
+
+    val numberOfOctopuses = coordinates.size
+
+    var numberOfBlips = 0
+
+    def handleFlash(
+        hasFlashed: mutable.Set[(Int, Int)],
+        i: Int,
+        j: Int
+    ): Unit = {
+      if (mutableGraph(i)(j) > 9) {
+        hasFlashed.add((i, j))
+        numberOfBlips = numberOfBlips + 1
+        maybeToFlash.enqueueAll(neighbours(graph)(i, j))
+        mutableGraph(i)(j) = 0
       }
-
-    (newMatrix._1, mapToMatrix(newMatrix._2)(matrix))
-
-  }
-
-  private def mapToMatrix(
-      newMatrix: Map[(Int, Int), Int]
-  )(matrix: Vector[Vector[Int]]): Vector[Vector[Int]] = {
-    matrix.indices
-      .map(i =>
-        matrix(i).indices.map { j =>
-          newMatrix(i, j)
-        }.toVector
-      )
-      .toVector
-  }
-
-  private def matrixToMap(matrix: Vector[Vector[Int]]): Map[(Int, Int), Int] = {
-    matrix.indices
-      .flatMap(i =>
-        matrix(i).indices.map { j =>
-          (i, j) -> matrix(i)(j)
-        }
-      )
-      .toMap
-  }
-
-  private def increaseMatrixByOne(
-      matrix: Vector[Vector[Int]]
-  )(mapMatrix: Map[(Int, Int), Int]): (Int, Map[(Int, Int), Int]) = {
-
-    mapMatrix.filter(_._2 == 0)
-
-    def loop(
-        mapMatrix: Map[(Int, Int), Int],
-        toVisit: List[(Int, Int)],
-        numberOfIteration: Int
-    ) = {
-      val (updatedMatrix, newToVisit) =
-        toVisit.foldLeft((mapMatrix, List.empty[(Int, Int)])) {
-          case ((m, coords), coord @ (i, j)) =>
-            val nei = neighbours(matrix)(i, j)
-            val withNeibourgsupdated =
-              nei.foldLeft(m) { case (map, (i1, j1)) =>
-                map.updated((i1, j1), map((i1, j1)) + 1)
-              }
-
-            (withNeibourgsupdated, coords ++ nei)
-        }
-      ???
     }
 
-    mapMatrix
-      .foldLeft((0, mapMatrix)) {
-        case ((numberOfIteration, matrix2), (key @ (i, j), a)) =>
-          val res = (a + 1) % 10
-          val neighboursBlips =
-            neighbours(matrix)(i, j).map(mapMatrix).count(_ == 9)
+    var allOctopusesFlashingAtTheSameTimeIndex = Option.empty[Int]
 
-//          println(
-////            s"$key $a -> $res - $neighboursBlips - ${neighbours(matrix)(i, j).map(mapMatrix)}"
-//            s"$key $a -> $res - ${(a + 1 + neighboursBlips) / 10}"
-//          )
-          val i1 = (a + 1 + neighboursBlips) / 10
-//            if ((res + neighboursBlips) / 10 > 0) 1
-//            else 0
-
-          val value: Int =
-            if (res == 0) res
-            else ((res + neighboursBlips) % 10)
-          (numberOfIteration + i1, matrix2.updated(key, value))
+    for (idx <- 1 to numberOfEvolution) {
+      val hasFlashed = mutable.Set.empty[(Int, Int)]
+      coordinates.foreach { case (i, j) =>
+        mutableGraph(i)(j) = mutableGraph(i)(j) + 1
+        handleFlash(hasFlashed, i, j)
       }
+      while (maybeToFlash.nonEmpty) {
+        val (i, j) = maybeToFlash.dequeue()
+        if (!hasFlashed.contains((i, j))) {
+          mutableGraph(i)(j) = mutableGraph(i)(j) + 1
+        }
+        handleFlash(hasFlashed, i, j)
+      }
+      if (
+        numberOfOctopuses == hasFlashed.size && allOctopusesFlashingAtTheSameTimeIndex.isEmpty
+      ) {
+        allOctopusesFlashingAtTheSameTimeIndex = Some(idx)
+      }
+    }
 
-//    mapMatrix.map { case (key @ (i, j), a) =>
-//      val res = (a + 1) % 10
-//      val neighboursBlips =
-//        neighbours(matrix)(i, j).map(mapMatrix).count(_ == 9)
-//
-////      println(
-////        s"$key $a -> $res - $neighboursBlips - ${neighbours(matrix)(i, j).map(mapMatrix)}"
-////      )
-//      if (res == 0) key -> res
-//      else key -> ((res + neighboursBlips) % 10)
-//    }
+    (
+      mutableGraph.map(_.to(Vector)).to(Vector),
+      numberOfBlips,
+      allOctopusesFlashingAtTheSameTimeIndex
+    )
   }
 
-//  def countNumberOfFlash(matrix: Vector[Vector[Int]])(iteration: Int): Int = {
-//
-//    val matrixAfterIteration = matrix.map(_.map(a => (a + iteration)))
-//
-//    val afterMatrix = matrix.indices
-//      .map(i =>
-//        matrix(i).indices.map { j =>
-//          //          (matrixAfterIteration(i)(j)) / 10
-//
-//          val numberOfBlipsAround = neighbours(
-//            matrixAfterIteration
-//          )(i, j)
-//            .map { case (i, j) =>
-//              matrixAfterIteration(i)(j)
-//            }
-//            .toSet[Int]
-//            .map(a => a / 10)
-//            .sum
-//
-//          val i1 = matrixAfterIteration(i)(j) + numberOfBlipsAround
-//          (i1 % 10, i1 / 10)
-//        }
-//      )
-//
-//    println()
-//    println(printMatrix(afterMatrix))
-//
-//    afterMatrix.flatten.map(_._2).sum
-//
-//  }
-
-  def printMatrix(afterMatrix: Vector[Vector[Int]]) = {
-    afterMatrix.map(_.mkString).mkString("\n")
-  }
 }
